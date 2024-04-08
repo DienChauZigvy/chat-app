@@ -1,0 +1,53 @@
+@use '../../common/variables' as v;
+
+.button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 12px 23px;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  .title {
+    flex-grow: 1;
+  }
+}
+
+.disabled {
+  opacity: 0.5;
+  background-color: aqua;
+
+  &:hover {
+    transform: none;
+  }
+}
+
+.btnContinue {
+  background: v.$bg-gradient;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  padding: 14px 23px;
+}
+
+.btnSignIn {
+  border-radius: 10px;
+  border: 1px #222222 solid;
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 15px;
+  background-color: #fff;
+}
+
+.btnFacebook {
+  .icon {
+    color: #428bff;
+  }
+}
