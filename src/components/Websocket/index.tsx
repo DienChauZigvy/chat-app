@@ -1,12 +1,22 @@
 import { useContext, useEffect, useState } from "react";
 import { WebsocketContext } from "../../contexts/WebsocketContext";
+import { Profile } from "../../pages/Login";
 
 type MessagePayload = {
   content: string;
-  msg: string;
+  chatName: string;
 };
 
 export default function Websocket() {
+  const [profile, setProfile] = useState<Profile>();
+
+  useEffect(() => {
+    const profileLocalStorage = localStorage.getItem("profile");
+    if (profileLocalStorage) {
+      const profile: Profile = JSON.parse(profileLocalStorage);
+      setProfile(profile);
+    }
+  }, []);
   const socket = useContext(WebsocketContext);
   const [messages, setMessages] = useState<MessagePayload[]>([]);
   const [value, setValue] = useState("");
@@ -17,9 +27,11 @@ export default function Websocket() {
     });
     socket.on("onMessage", (data: MessagePayload) => {
       console.log("onMessage event recieved!");
-      console.log(data);
+      console.log(11, data);
       setMessages((prev) => [data, ...prev]);
     });
+
+    socket.emit("join", { chatName: "chatroom7" });
 
     return () => {
       console.log("Unregistering Events...");
@@ -29,11 +41,11 @@ export default function Websocket() {
   }, []);
 
   const onSubmit = () => {
-    socket.emit("addMessage", value);
+    socket.emit("createMessage", { content: value, chatName: "chatroom7" });
     setValue("");
   };
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       <h1>Web socket component</h1>
       <input
         type="text"
@@ -48,7 +60,10 @@ export default function Websocket() {
         ) : (
           <div>
             {messages?.map((mes, index) => (
-              <div key={index}>{mes.content}</div>
+              <div key={index} style={{ display: "flex", gap: 20 }}>
+                <span>{profile?.username}: </span>
+                <span>{mes.content}</span>
+              </div>
             ))}
           </div>
         )}

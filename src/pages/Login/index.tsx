@@ -3,13 +3,26 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import * as yup from "yup";
 import Button from "../../components/Button";
 import styles from "./Login.module.scss";
+import { useMutation } from "@tanstack/react-query";
+import { authApi } from "../../api";
+import { AxiosError } from "axios";
+import { useProfile } from "../../hooks/useProfile";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 export interface LoginPayload {
   email: string;
   password: string;
 }
 
+export interface Profile {
+  id: string;
+  username: string;
+  email: string;
+}
+
 export default function Login() {
+  const navigate = useNavigate();
   const validationSchema = yup.object({
     email: yup.string().required("Email is required"),
     password: yup.string().required("Password is required"),
@@ -17,6 +30,7 @@ export default function Login() {
   const {
     handleSubmit,
     register,
+    reset,
     formState: { errors },
   } = useForm<LoginPayload>({
     defaultValues: {
@@ -26,9 +40,52 @@ export default function Login() {
     resolver: yupResolver(validationSchema),
   });
 
-  const onSubmit: SubmitHandler<LoginPayload> = (data) => {
-    console.log(data);
+  const { mutateAsync, isSuccess: isLoginSuccess } = useMutation({
+    mutationFn: (body: LoginPayload) => {
+      return authApi.login(body);
+    },
+    mutationKey: ["login"],
+  });
+
+  const onSubmit: SubmitHandler<LoginPayload> = async (data) => {
+    try {
+      const response = await mutateAsync(data, {
+        onSuccess: () => {
+          // toast?.success(`${data.email} login sucess`);
+          console.log(`${data.email} login sucess`);
+          reset();
+        },
+      });
+
+      if (response) {
+        localStorage.setItem("access_token", response.accessToken);
+        localStorage.setItem("refresh_token", response.refreshToken);
+      }
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        let message = error.response?.data.message || "Server Unavailable";
+        let code = error.response?.status || 503;
+        // toast?.error(`${code}: ${message}`);
+        console.log(`${code}: ${message}`);
+      } else if (error instanceof Error) {
+        let message = error.message;
+        console.log(`${message}`);
+        // toast?.error(`${message}`);
+      }
+    }
   };
+
+  const { data: profile, isSuccess: isProfileSuccess } = useProfile({
+    enabled: isLoginSuccess,
+  });
+
+  useEffect(() => {
+    if (isLoginSuccess && isProfileSuccess) {
+      navigate("/");
+    }
+
+    localStorage.setItem("profile", JSON.stringify(profile));
+  }, [isLoginSuccess, isProfileSuccess]);
   return (
     <div>
       <div className={styles.loginContainer}>
